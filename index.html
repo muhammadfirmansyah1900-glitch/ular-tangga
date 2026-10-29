@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ular Tangga LDR</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3ead2;--ink:#24352b;--card:#fffaf0;--muted:#6b7a6c;--g1:#6f9a62;--g2:#5f8a55;--river:#a9cfe8;--gold:#f2c14e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b2a22;--ink:#f1ead6;--card:#2a3b31;--muted:#a5b3a6}}
+:root[data-theme="dark"]{--bg:#1b2a22;--ink:#f1ead6;--card:#2a3b31;--muted:#a5b3a6}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Fredoka',system-ui,sans-serif;min-height:100vh}
+main{max-width:1100px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:0 0 4px}
+.sub,.note{color:var(--muted);margin:0 0 12px}
+.card{background:var(--card);border-radius:16px;padding:16px}
+#home{max-width:440px;margin:20px auto;display:grid;gap:12px}
+label{display:grid;gap:4px;font-weight:600}
+input[type=text],textarea{font:inherit;padding:10px 12px;border-radius:10px;border:2px solid var(--g2);background:var(--bg);color:var(--ink);width:100%}
+.seg{display:flex;gap:8px}.seg label{flex:1;display:flex;gap:6px;align-items:center;padding:10px;border-radius:12px;border:2px solid var(--g2);cursor:pointer}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 18px;background:var(--g2);color:#fff;cursor:pointer}
+button.alt{background:var(--muted)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}
+[hidden]{display:none!important}
+#err{color:#c0392b;font-weight:600;margin:0}
+#game{display:none}
+.bar{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;margin-bottom:10px}
+.pl{flex:1;min-width:140px;padding:8px 12px;border-radius:14px;background:var(--card);border:3px solid transparent}
+.pl.on{border-color:var(--gold)}
+.pl b{display:flex;align-items:center;gap:8px}
+.pl small{color:var(--muted)}
+.dot{width:16px;height:16px;border-radius:50%;flex:none}
+#dice{font-size:2.4rem;line-height:1;min-width:64px;background:var(--card);color:var(--ink);padding:6px 10px}
+#msg{flex-basis:100%;margin:0;font-weight:600}
+#room{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
+#boardWrap{position:relative;background:var(--river);border:6px solid #e0c675;border-radius:14px;padding:6px}
+#board{display:grid;gap:3px;position:relative}
+.c{aspect-ratio:1;border-radius:8px;position:relative;font-size:.7rem;color:#e8f3df;padding:2px 4px;min-height:0;overflow:hidden}
+.c.q::after{content:"";position:absolute;right:5px;bottom:5px;width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.c.end{background:#c9a227!important;color:#2a2200;font-weight:700}
+.dc{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.1rem;opacity:.35}
+.tk{position:absolute;inset:0;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;z-index:3}
+.tk i{width:40%;max-width:24px;aspect-ratio:1;border-radius:50%;border:3px solid #fff;display:block}
+#ov{position:absolute;inset:6px;pointer-events:none;z-index:2;width:calc(100% - 12px);height:calc(100% - 12px)}
+#start{margin-top:8px;font-size:.9rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#start i{width:16px;height:16px;border-radius:50%;border:3px solid #fff;display:inline-block}
+#log{margin:10px 0;padding-left:18px;color:var(--muted);font-size:.9rem}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+dialog{border:0;border-radius:20px;padding:24px;max-width:min(460px,92vw);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+dialog h2{margin:0 0 6px;font-size:1.1rem}
+.qt{font-size:1.3rem;font-weight:600;margin:0 0 18px;line-height:1.35}
+.ck{display:flex;gap:8px;align-items:center;font-weight:400}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Ular Tangga LDR</h1>
+<p class="sub">Gantian lempar dadu, jawab pertanyaan di kotak kuning, dan sampai duluan ke 55.</p>
+
+<section id="home" class="card">
+  <div class="seg">
+    <label><input type="radio" name="m" value="local" checked>Satu layar</label>
+    <label><input type="radio" name="m" value="online">Dua HP</label>
+  </div>
+  <div id="hl" style="display:grid;gap:10px">
+    <p class="note">Satu orang buka halaman ini lalu share screen lewat VC. Pemain 3 dan 4 boleh dikosongkan.</p>
+    <label>Pemain 1<input type="text" id="n0" value="Aku" maxlength="14"></label>
+    <label>Pemain 2<input type="text" id="n1" value="Kamu" maxlength="14"></label>
+    <label>Pemain 3<input type="text" id="n2" maxlength="14"></label>
+    <label>Pemain 4<input type="text" id="n3" maxlength="14"></label>
+    <button id="cont" type="button" class="alt" hidden>Lanjutkan permainan terakhir</button>
+  </div>
+  <div id="ho" hidden style="display:grid;gap:10px">
+    <p class="note" id="onote">Kalian berdua buka link ini di HP masing-masing, lalu masukkan kode ruang yang sama.</p>
+    <label>Kode ruang<input type="text" id="code" placeholder="contoh: RINDU" maxlength="12"></label>
+    <label>Namamu<input type="text" id="myn" value="Aku" maxlength="14"></label>
+  </div>
+  <button id="go" type="button">Mulai main</button>
+  <p id="err"></p>
+</section>
+
+<section id="game">
+  <p id="room"></p>
+  <div class="bar" id="bar"></div>
+  <div id="boardWrap"><div id="board"></div><svg id="ov"></svg></div>
+  <div id="start"></div>
+  <ul id="log"></ul>
+  <div class="row">
+    <button id="setb" type="button" class="alt">Pengaturan</button>
+    <button id="reset" type="button" class="alt">Main ulang</button>
+    <button id="exit" type="button" class="alt">Keluar</button>
+  </div>
+</section>
+
+<dialog id="dlg">
+  <h2 id="who"></h2>
+  <p class="note" id="cat"></p>
+  <p class="qt" id="qt"></p>
+  <button id="done" type="button">Sudah dijawab</button>
+</dialog>
+
+<dialog id="set">
+  <h2>Pengaturan</h2>
+  <p class="note">Pilih jenis pertanyaan yang boleh muncul.</p>
+  <div id="cats" style="display:grid;gap:8px;margin-bottom:14px"></div>
+  <label>Tambah pertanyaan buatan kalian<textarea id="newq" rows="2" maxlength="160"></textarea></label>
+  <p class="note" id="qn"></p>
+  <label class="ck"><input type="checkbox" id="snd" checked>Efek suara</label>
+  <div class="row" style="margin-top:14px"><button id="addq" type="button">Tambah</button><button id="closeset" type="button" class="alt">Tutup</button></div>
+</dialog>
+</main>
+
+<script>
+const END=55,COL=["#e4572e","#2e86ab","#8e5ea2","#d6537f"];
+const SNAKES={17:4,27:9,38:22,49:31,53:34},LADDERS={3:15,12:30,24:42,37:46};
+const QS=[
+["Obrolan dalam","Apakah aku sudah jadi pendengar yang baik buat kamu?"],
+["Obrolan dalam","Apa hal kecil dariku yang paling bikin kamu tenang?"],
+["Obrolan dalam","Kapan kamu paling merasa dekat sama aku, padahal kita jauh?"],
+["Obrolan dalam","Apa yang paling kamu takutkan dari LDR ini?"],
+["Obrolan dalam","Apa satu hal yang ingin kamu ubah dari cara kita berkomunikasi?"],
+["Obrolan dalam","Momen apa yang bikin kamu yakin sama aku?"],
+["Obrolan dalam","Apa mimpi kita berdua yang belum pernah kita bicarakan?"],
+["Obrolan dalam","Kapan terakhir kamu merasa kesepian, dan apa yang kamu butuhkan saat itu?"],
+["Kenangan","Ceritakan kesan pertamamu waktu kita ketemu."],
+["Kenangan","Apa kencan kita yang paling kamu ingat?"],
+["Kenangan","Lagu apa yang selalu bikin kamu ingat aku?"],
+["Kenangan","Apa kebiasaanku yang diam-diam kamu suka?"],
+["Rencana","Kalau besok bisa ketemu, kita langsung ngapain?"],
+["Rencana","Kota mana yang ingin kamu datangi bareng aku?"],
+["Rencana","Kita tinggal serumah nanti, aturan pertama yang kamu mau apa?"],
+["Rencana","Makanan apa yang mau kita masak bareng pertama kali?"],
+["Tantangan","Tiru gaya bicaraku selama 30 detik."],
+["Tantangan","Nyanyikan satu lagu favoritmu, boleh fals."],
+["Tantangan","Tunjukkan isi kulkasmu lewat kamera."],
+["Tantangan","Kirim foto terlucu dirimu di galeri sekarang."],
+["Tantangan","Kasih tiga pujian ke pasanganmu tanpa mikir lama."],
+["Tantangan","Gambar wajah pasanganmu dalam 30 detik, lalu tunjukkan."],
+["Ringan","Panggilan sayang apa yang paling kamu suka dariku?"],
+["Ringan","Kalau aku hewan, aku hewan apa menurutmu?"],
+["Ringan","Tebak: pesanan kopi atau minuman favoritku apa?"],
+["Ringan","Apa hal paling random yang kamu pikirkan tentang aku hari ini?"]
+];
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const hasQ=n=>n>0&&n<END&&n%3!==0&&!SNAKES[n]&&!LADDERS[n];
+let S=null,mode="local",db=null,uid=null,ref=null,unsub=null,code="",cols=11,disp=[],lastMv=-1,ani=false,rolling=false,muted=false,AC;
+
+/* suara */
+function tone(f,d,t,w){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain(),s=AC.currentTime+(w||0);o.type=t||"sine";o.frequency.value=f;g.gain.setValueAtTime(.12,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(AC.destination);o.start(s);o.stop(s+d)}catch(e){}}
+const seq=(a,d,t)=>a.forEach((f,i)=>tone(f,d,t,i*.1));
+const SFX={step:()=>tone(520,.06),up:()=>seq([523,659,784,1047],.12,"triangle"),down:()=>seq([392,330,262,196],.14,"sawtooth"),q:()=>seq([880,1175],.18),win:()=>seq([523,659,784,1047,784,1047],.2,"triangle")};
+
+/* state */
+function newState(names){return{players:names.map(n=>({n,p:0,uid:null,q:0,s:0,l:0})),turn:0,again:false,pend:null,over:-1,mv:null,mvId:0,used:[],extra:[],cats:{},log:[]}}
+const all=()=>QS.concat((S.extra||[]).map(x=>["Buatan kita",x]));
+function pick(){
+  const A=all(),ok=i=>S.cats[A[i][0]]!==false;
+  let pool=A.map((_,i)=>i).filter(i=>ok(i)&&!S.used.includes(i));
+  if(!pool.length){S.used=[];pool=A.map((_,i)=>i).filter(ok)}
+  if(!pool.length)return -1;
+  const i=pool[Math.floor(Math.random()*pool.length)];S.used.push(i);return i;
+}
+function addLog(t){S.log=(S.log||[]).concat(t).slice(-5)}
+const canAct=()=>mode==="local"||S.players[S.turn].uid===uid;
+async function save(){
+  try{
+    if(mode==="online")await ref.set(S);
+    else localStorage.setItem("ldr-ular",JSON.stringify(S));
+  }catch(e){$("err").textContent="Perubahan gagal disimpan."}
+}
+
+/* papan */
+function xy(n){const i=n-1,rows=Math.ceil(END/cols);let r=Math.floor(i/cols),c=i%cols;if(r%2)c=cols-1-c;return{c,r:rows-1-r}}
+function draw(){
+  cols=innerWidth<700?5:11;
+  const rows=Math.ceil(END/cols),b=$("board");
+  b.style.gridTemplateColumns="repeat("+cols+",1fr)";b.innerHTML="";
+  for(let n=1;n<=END;n++){
+    const {c,r}=xy(n),d=document.createElement("div");
+    d.className="c"+(hasQ(n)?" q":"")+(n===END?" end":"");
+    d.style.gridColumn=c+1;d.style.gridRow=r+1;d.style.background=(c+r)%2?"var(--g1)":"var(--g2)";
+    d.id="c"+n;
+    const dc=!hasQ(n)&&!SNAKES[n]&&!LADDERS[n]?(n%7===2?"🌲":n%11===5?"⛰️":n%13===6?"🌿":""):"";
+    d.innerHTML=(n===END?"Finish":n)+(dc?'<span class="dc">'+dc+"</span>":"");
+    b.appendChild(d);
+  }
+  const s=$("ov");s.setAttribute("viewBox","0 0 "+cols*100+" "+rows*100);s.setAttribute("preserveAspectRatio","none");
+  const P=n=>{const p=xy(n);return[p.c*100+50,p.r*100+50]};let h="";
+  for(const a in LADDERS){
+    const [x1,y1]=P(+a),[x2,y2]=P(LADDERS[a]),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),nx=-dy/L*14,ny=dx/L*14;
+    h+=`<g stroke="#fff" stroke-width="6" stroke-linecap="round"><line x1="${x1+nx}" y1="${y1+ny}" x2="${x2+nx}" y2="${y2+ny}"/><line x1="${x1-nx}" y1="${y1-ny}" x2="${x2-nx}" y2="${y2-ny}"/>`;
+    const k=Math.max(2,Math.floor(L/32));
+    for(let i=1;i<k;i++){const t=i/k,px=x1+dx*t,py=y1+dy*t;h+=`<line x1="${px+nx}" y1="${py+ny}" x2="${px-nx}" y2="${py-ny}" stroke-width="4"/>`}
+    h+="</g>";
+  }
+  for(const a in SNAKES){
+    const [x1,y1]=P(+a),[x2,y2]=P(SNAKES[a]),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),nx=-dy/L*38,ny=dx/L*38;
+    h+=`<path d="M${x1} ${y1} Q${x1+dx*.25+nx} ${y1+dy*.25+ny} ${x1+dx*.5} ${y1+dy*.5} T${x2} ${y2}" fill="none" stroke="#8c3b2e" stroke-width="9" stroke-linecap="round"/><circle cx="${x1}" cy="${y1}" r="12" fill="#8c3b2e"/><circle cx="${x1-4}" cy="${y1-3}" r="3" fill="#fff"/><circle cx="${x1+4}" cy="${y1-3}" r="3" fill="#fff"/>`;
+  }
+  s.innerHTML=h;tokens();
+}
+function tokens(){
+  document.querySelectorAll(".tk").forEach(e=>e.remove());
+  const st=$("start");st.innerHTML="";let any=false;
+  S.players.forEach((pl,i)=>{
+    const p=disp[i]||0,t=document.createElement("i");t.style.background=COL[i];
+    if(p<1){st.appendChild(t);st.append(pl.n+" ");any=true}
+    else{let w=document.querySelector("#c"+p+" .tk");if(!w){w=document.createElement("div");w.className="tk";$("c"+p).appendChild(w)}w.appendChild(t)}
+  });
+  if(any)st.append("belum mulai");
+}
+
+/* tampilan */
+function ui(){
+  const bar=$("bar");
+  bar.innerHTML=S.players.map((p,i)=>`<div class="pl${S.turn===i&&S.over<0?" on":""}"><b><span class="dot" style="background:${COL[i]}"></span>${esc(p.n)}${mode==="online"&&!p.uid?" (menunggu)":""}</b><small>Kotak ${disp[i]||0} · ❓${p.q} 🪜${p.l} 🐍${p.s}</small></div>`).join("")+'<button id="dice" aria-label="Lempar dadu">'+($("dice")?$("dice").textContent:"🎲")+'</button><p id="msg"></p>';
+  $("dice").onclick=roll;
+  $("dice").disabled=ani||rolling||!!S.pend||S.over>=0||!canAct();
+  const cur=S.players[S.turn];
+  $("msg").textContent=S.over>=0?"🎉 "+S.players[S.over].n+" sampai finish! Yang kalah traktir lewat ojol ya.":S.pend?cur.n+" sedang menjawab pertanyaan":canAct()?"Giliran "+cur.n+(S.again?", lempar lagi (dadu 6)":", lempar dadu"):"Menunggu "+cur.n+" melempar dadu";
+  $("log").innerHTML=(S.log||[]).map(l=>"<li>"+esc(l)+"</li>").join("");
+  $("room").textContent=mode==="online"?"Kode ruang: "+code+(S.players.some(p=>!p.uid)?" · minta pasangan masuk dengan kode ini":""):"";
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function sync(){
+  if(ani)return;
+  disp=S.players.map(p=>p.p);tokens();ui();
+  const d=$("dlg");
+  if(S.pend&&S.over<0){
+    const A=all(),q=A[S.pend.i]||["","?"];
+    $("who").textContent=S.players[S.pend.who].n+" menjawab";$("cat").textContent=q[0];$("qt").textContent=q[1];
+    if(!d.open){d.showModal();SFX.q()}
+  }else if(d.open)d.close();
+}
+async function anim(mv){
+  ani=true;const f=["⚀","⚁","⚂","⚃","⚄","⚅"];
+  ui();$("dice").textContent=f[mv.v-1];
+  for(const p of mv.path){disp[mv.w]=p;tokens();SFX.step();await sleep(200)}
+  if(mv.kind){mv.kind==="l"?SFX.up():SFX.down();await sleep(450);disp[mv.w]=mv.to;tokens();await sleep(250)}
+  ani=false;
+  if(S.over>=0)SFX.win();
+}
+async function apply(ns,first){
+  S=ns;
+  if(first){lastMv=S.mvId;disp=S.players.map(p=>p.p)}
+  else if(S.mvId>lastMv){lastMv=S.mvId;if(S.mv&&!ani)await anim(S.mv)}
+  sync();
+}
+
+/* aksi */
+async function roll(){
+  if(ani||rolling||S.pend||S.over>=0||!canAct())return;
+  rolling=true;ui();
+  const f=["⚀","⚁","⚂","⚃","⚄","⚅"];
+  for(let k=0;k<8;k++){$("dice").textContent=f[Math.floor(Math.random()*6)];tone(300+k*30,.04);await sleep(70)}
+  const v=1+Math.floor(Math.random()*6),t=S.turn,P=S.players[t],from=P.p,path=[];
+  for(let k=1;k<=v&&from+k<=END;k++)path.push(from+k);
+  let end=path.length?path[path.length-1]:from,kind="",txt=P.n+" dapat "+v;
+  if(LADDERS[end]){kind="l";end=LADDERS[end];P.l++;txt+=", naik tangga ke "+end}
+  else if(SNAKES[end]){kind="s";end=SNAKES[end];P.s++;txt+=", digigit ular, turun ke "+end}
+  P.p=end;S.mvId++;S.mv={w:t,path,to:end,kind,v};S.again=v===6&&end<END;
+  const qi=end<END&&hasQ(end)?pick():-1;
+  if(end>=END){S.over=t;txt+=" dan menang!"}
+  else if(qi>=0)S.pend={who:t,i:qi};
+  else if(!S.again)S.turn=(t+1)%S.players.length;
+  addLog(txt);
+  await save();rolling=false;
+  await apply(S);
+}
+async function answered(){
+  const w=S.pend.who;S.players[w].q++;S.pend=null;
+  if(!S.again)S.turn=(w+1)%S.players.length;
+  addLog(S.players[w].n+" sudah menjawab");
+  $("dlg").close();await save();sync();
+}
+async function resetGame(){
+  S.players.forEach(p=>{p.p=0;p.q=p.s=p.l=0});
+  S.turn=0;S.again=false;S.pend=null;S.over=-1;S.mv=null;S.mvId++;S.log=["Permainan dimulai ulang"];
+  await save();lastMv=S.mvId;sync();
+}
+
+/* masuk / keluar */
+function show(){
+  $("home").style.display="none";$("game").style.display="block";
+  $("err").textContent="";draw();
+}
+async function startLocal(){
+  const names=[0,1,2,3].map(i=>$("n"+i).value.trim()).filter(Boolean);
+  if(names.length<2){$("err").textContent="Isi minimal dua nama.";return}
+  mode="local";S=newState(names);await save();apply(S,true);show();ui();
+}
+async function startOnline(){
+  code=$("code").value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(!code){$("err").textContent="Isi kode ruang. Bebas, asal sama dengan pasanganmu.";return}
+  const nm=$("myn").value.trim()||"Aku";
+  try{
+    ref=db.doc("games/"+code);
+    const sn=await ref.get();let d=sn.exists?sn.data():null;
+    if(!d){d=newState([nm,"Pasangan"]);d.players[0].uid=uid}
+    else{
+      let i=d.players.findIndex(p=>p.uid===uid);
+      if(i<0){i=d.players.findIndex(p=>!p.uid);if(i<0){$("err").textContent="Ruang ini sudah penuh.";return}d.players[i].uid=uid;d.players[i].n=nm}
+    }
+    mode="online";await ref.set(d);await apply(d,true);show();ui();
+    unsub=ref.onSnapshot(s=>{if(s.exists)apply(s.data())},()=>{});
+  }catch(e){$("err").textContent="Gagal terhubung. Pastikan kamu login ke Claude dan sudah diberi akses ke halaman ini."}
+}
+function exit(){
+  if(unsub)unsub();unsub=null;$("game").style.display="none";$("home").style.display="grid";
+  $("dlg").open&&$("dlg").close();$("cont").hidden=!localStorage.getItem("ldr-ular");
+}
+
+/* pengaturan */
+function openSet(){
+  const cs=[...new Set(all().map(x=>x[0]))];
+  $("cats").innerHTML=cs.map(c=>`<label class="ck"><input type="checkbox" data-c="${esc(c)}" ${S.cats[c]===false?"":"checked"}>${esc(c)}</label>`).join("");
+  $("cats").querySelectorAll("input").forEach(i=>i.onchange=async()=>{S.cats[i.dataset.c]=i.checked;await save()});
+  $("qn").textContent=(S.extra||[]).length+" pertanyaan buatan kalian";
+  $("set").showModal();
+}
+
+/* init */
+document.querySelectorAll("input[name=m]").forEach(r=>r.onchange=()=>{
+  const on=r.value==="online"&&r.checked;
+  $("hl").style.display=on?"none":"grid";$("ho").hidden=!on;$("ho").style.display=on?"grid":"none";
+  $("go").textContent=on?"Masuk ruang":"Mulai main";$("err").textContent="";
+});
+$("go").onclick=()=>document.querySelector("input[name=m]:checked").value==="online"?(db&&uid?startOnline():$("err").textContent="Mode dua HP belum tersedia di sini. Buka lewat link claude.ai dalam keadaan login."):startLocal();
+$("cont").onclick=()=>{try{mode="local";S=JSON.parse(localStorage.getItem("ldr-ular"));apply(S,true);show();ui()}catch(e){$("err").textContent="Tidak ada permainan tersimpan."}};
+$("done").onclick=answered;
+$("dlg").addEventListener("cancel",e=>e.preventDefault());
+$("setb").onclick=openSet;$("closeset").onclick=()=>$("set").close();
+$("addq").onclick=async()=>{const t=$("newq").value.trim();if(!t)return;S.extra=(S.extra||[]).concat(t);$("newq").value="";await save();openSet.call&&($("qn").textContent=S.extra.length+" pertanyaan buatan kalian")};
+$("snd").onchange=()=>muted=!$("snd").checked;
+let armed=0;
+$("reset").onclick=async()=>{
+  if(!armed){armed=1;$("reset").textContent="Yakin? Tekan lagi";setTimeout(()=>{armed=0;$("reset").textContent="Main ulang"},3000);return}
+  armed=0;$("reset").textContent="Main ulang";await resetGame();
+};
+$("exit").onclick=exit;
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(S&&$("game").style.display==="block"&&(innerWidth<700?5:11)!==cols){draw();ui()}},200)});
+try{$("cont").hidden=!localStorage.getItem("ldr-ular")}catch(e){}
+(async()=>{
+  try{
+    if(window.claude&&claude.use){db=await claude.use("db");const u=await claude.use("user");uid=u?await u.id():null}
+  }catch(e){}
+  if(!db||!uid)$("onote").textContent="Mode dua HP butuh login Claude dan akses ke halaman ini. Kalau tombol masuk gagal, pakai mode satu layar.";
+})();
+</script>
+</body>
+</html>
